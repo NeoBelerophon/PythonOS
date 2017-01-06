@@ -1,4 +1,5 @@
 import pyos
+from pyos import threading
 
 try:
     import wifi
@@ -37,7 +38,7 @@ class Network(pyos.GUI.Container):
         if self.cell == fiapp.currentCell: return
         if self.schemeExists() and not force_new_scheme:
             self.connBtn.setText("...")
-            pt = pyos.ParallelTask(self.connect_existing)
+            pt = threading.ParallelTask(self.connect_existing)
             state.getThreadController().addThread(pt)
             return
         if self.cell.encrypted:
@@ -46,7 +47,7 @@ class Network(pyos.GUI.Container):
             self.launchConnectThread(None)
         
     def launchConnectThread(self, pwd):
-        pt = pyos.ParallelTask(self.connect, (pwd,))
+        pt = threading.ParallelTask(self.connect, (pwd,))
         state.getThreadController().addThread(pt)
         
     def connect_existing(self):

@@ -1,4 +1,6 @@
 import pyos
+from pyos import threading
+
 
 def onStart(s, a):
     global state, app
@@ -88,7 +90,7 @@ class Gallery(object):
             self.pages.addChild(tn)
             self.containers.append(tn)
         app.dataStore["path"] = self.path
-        state.getThreadController().addThread(pyos.ParallelTask(self.loadThumbnails))
+        state.getThreadController().addThread(threading.ParallelTask(self.loadThumbnails))
         
     def selectDir(self):
         startDir = str(pyos.__file__).rstrip("pyos.pyc") if self.path=="" else self.path

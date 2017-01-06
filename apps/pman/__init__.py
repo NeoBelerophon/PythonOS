@@ -1,10 +1,10 @@
-import pyos
 import urllib2
-from urllib import urlretrieve
-from apps.pman.fuzzywuzzy import fuzz
 from datetime import timedelta
+from urllib import urlretrieve
 
-import time
+import pyos
+from apps.pman.fuzzywuzzy import fuzz
+from pyos import threading
 
 """
 PMan Specific app.json parameters.
@@ -258,7 +258,7 @@ class UpdateScreen(Screen):
         self.back = BackBtn((0, 0))
         self.sizesel = SizeSelector((app.ui.width-100, 0), 100, 40, self.bgLoad)
         self.addChildren(self.scroller, self.statustxt, self.back, self.sizesel)
-        state.getThreadController().addThread(pyos.ParallelTask(self.bgLoad))
+        state.getThreadController().addThread(threading.ParallelTask(self.bgLoad))
         
 class AppListScreen(Screen):
     def __init__(self, apps):
@@ -292,7 +292,7 @@ class AppListScreen(Screen):
         self.back = BackBtn((0, 0))
         self.sizesel = SizeSelector((app.ui.width-100, 0), 100, 40, self.bgLoad)
         self.addChildren(self.scroller, self.statustxt, self.back, self.sizesel)
-        state.getThreadController().addThread(pyos.ParallelTask(self.bgLoad))
+        state.getThreadController().addThread(threading.ParallelTask(self.bgLoad))
         
 class SearchScreen(Screen):
     def __init__(self, query):
@@ -337,7 +337,7 @@ class SearchScreen(Screen):
         self.back = BackBtn((0, 0))
         self.sizesel = SizeSelector((app.ui.width-80, 0), 80, 40, self.bgLoad)
         self.addChildren(self.scroller, self.statustxt, self.submitbtn, self.back, self.sizesel)
-        state.getThreadController().addThread(pyos.ParallelTask(self.bgLoad))
+        state.getThreadController().addThread(threading.ParallelTask(self.bgLoad))
         
 class MainScreen(Screen):
     def __init__(self):
@@ -441,7 +441,7 @@ class Cache(pyos.DataStore):
         pman.refresh()
         
     def bgUpdate(self):
-        state.getThreadController().addThread(pyos.ParallelTask(self.update))
+        state.getThreadController().addThread(threading.ParallelTask(self.update))
         
 class Installer(object):
     def __init__(self, appname, local=False):
@@ -495,7 +495,7 @@ class Installer(object):
         if resp == "Yes":
             self.dialog.display()
             self.dialog.update("Requested install of "+self.name)
-            state.getThreadController().addThread(pyos.ParallelTask(self.install))
+            state.getThreadController().addThread(threading.ParallelTask(self.install))
             
     def install(self):
         deps = Installer.getDependencies(self.name)

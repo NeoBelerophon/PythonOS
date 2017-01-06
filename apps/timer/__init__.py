@@ -1,4 +1,7 @@
-import pyos, datetime
+import datetime
+import pyos
+from pyos import threading
+
 
 def onStart(s, a):
     global state, app, timer
@@ -14,8 +17,8 @@ def showNotification():
     
 def setNotification():
     if not timer.started: return
-    task = pyos.TimedTask(datetime.datetime.now() + datetime.timedelta(minutes=int(timer.min_text.text.rstrip("m")), seconds=int(timer.sec_text.text.rstrip("s"))),
-                          showNotification)
+    task = threading.TimedTask(datetime.datetime.now() + datetime.timedelta(minutes=int(timer.min_text.text.rstrip("m")), seconds=int(timer.sec_text.text.rstrip("s"))),
+                               showNotification)
     state.getThreadController().addThread(task)
     
 class Timer(object):
