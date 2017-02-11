@@ -1,13 +1,21 @@
 import pyos
 from math import sqrt
 
+from pyos.gui.button import Button
+from pyos.gui.canvas import Canvas
+from pyos.gui.dialog import AskDialog, OKDialog
+from pyos.gui.image import Image
+from pyos.gui.overlay import Overlay
+from pyos.gui.selector import Selector
+
+
 def onStart(s, a):
     global state, app, picasso
     state = s
     app = a
     picasso = Picasso()
 
-class PainterCanvas(pyos.GUI.Canvas):
+class PainterCanvas(Canvas):
     def __init__(self, position, **data):
         self.layers = []
         self.paintPoints = []
@@ -81,14 +89,14 @@ class PainterCanvas(pyos.GUI.Canvas):
             self.surface.blit(l, (0, 0))
         super(PainterCanvas, self).render(largerSurface)
         
-class Menu(pyos.GUI.Overlay):
+class Menu(Overlay):
     def __init__(self):
         hUnit = (app.ui.width / 100) * 20
         super(Menu, self).__init__(("80%", app.ui.height - (hUnit * 4)), width=hUnit, height=hUnit * 4, color=(255, 255, 255))
         self.container.border = 1
-        self.clearBtn = pyos.GUI.Image((0, 0), surface=state.getIcons().getLoadedIcon("delete"), width=hUnit, height=hUnit,
+        self.clearBtn = Image((0, 0), surface=state.getIcons().getLoadedIcon("delete"), width=hUnit, height=hUnit,
                                        onClick=self.clear)
-        self.saveBtn = pyos.GUI.Image((0, hUnit), surface=state.getIcons().getLoadedIcon("save"), width=hUnit, height=hUnit,
+        self.saveBtn = Image((0, hUnit), surface=state.getIcons().getLoadedIcon("save"), width=hUnit, height=hUnit,
                                        onClick=self.save)
         self.addChild(self.clearBtn)
         self.addChild(self.saveBtn)
@@ -106,12 +114,12 @@ class Picasso(object):
         self.undo_history = []
         self.menu = Menu()
         self.canvas = PainterCanvas((0, 0), width="100%", height="90%")
-        self.modesel = pyos.GUI.Selector((0, "90%"), ["Line", "Rectangle", "Circle", "Ellipse"],
+        self.modesel = Selector((0, "90%"), ["Line", "Rectangle", "Circle", "Ellipse"],
                                          width="40%", height="10%", border=1, onValueChanged=self.setCanvasMode)
-        self.undoBtn = pyos.GUI.Button(("40%", "90%"), "Undo", width="20%", height="10%", onClick=self.undo)
-        self.redoBtn = pyos.GUI.Button(("60%", "90%"), "Redo", state.getColorPalette().getColor("lighter:background"),
+        self.undoBtn = Button(("40%", "90%"), "Undo", width="20%", height="10%", onClick=self.undo)
+        self.redoBtn = Button(("60%", "90%"), "Redo", state.getColorPalette().getColor("lighter:background"),
                                        width="20%", height="10%", onClick=self.redo)
-        self.menuBtn = pyos.GUI.Button(("80%", "90%"), "More", state.getColorPalette().getColor("lighter:accent"),
+        self.menuBtn = Button(("80%", "90%"), "More", state.getColorPalette().getColor("lighter:accent"),
                                        width="20%", height="10%", onClick=self.menu.display)
         app.ui.addChildren(self.canvas, self.modesel, self.undoBtn, self.redoBtn, self.menuBtn)
     
@@ -127,10 +135,10 @@ class Picasso(object):
         
     def save(self, folder, filename):
         pyos.pygame.image.save(self.canvas.surface, pyos.os.path.join(folder, filename))
-        pyos.GUI.OKDialog("Saved", "The file was successfully written").display()
+        OKDialog("Saved", "The file was successfully written").display()
         
     def promptSaveFile(self, folder):
-        pyos.GUI.AskDialog("Save As", "Pick a name for your creation.", self.save, (folder,)).display()
+        AskDialog("Save As", "Pick a name for your creation.", self.save, (folder,)).display()
         
     def pickSaveFolder(self):
         state.getApplicationList().getApp("files").getModule().FolderPicker(("10%", "10%"), width="80%", height="80%",

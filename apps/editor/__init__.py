@@ -1,4 +1,9 @@
 import pyos
+from pyos.gui.dialog import ErrorDialog
+from pyos.gui.image import Image
+from pyos.gui.multilinetextentryfield import MultiLineTextEntryField
+from pyos.gui.text import Text
+
 
 def onStart(s, a):
     global state, app, editor
@@ -16,11 +21,11 @@ class Editor(object):
         
         self.saved = False
         
-        self.textField = pyos.GUI.MultiLineTextEntryField((0, 0), width=app.ui.width, height=app.ui.height-40, border=0)
-        self.fnText = pyos.GUI.Text((2, app.ui.height-32), "new file", pyos.DEFAULT, 16)
-        self.openBtn = pyos.GUI.Image((app.ui.width-80, app.ui.height-40), surface=state.getIcons().getLoadedIcon("open"),
+        self.textField = MultiLineTextEntryField((0, 0), width=app.ui.width, height=app.ui.height-40, border=0)
+        self.fnText = Text((2, app.ui.height-32), "new file", pyos.gui.DEFAULT, 16)
+        self.openBtn = Image((app.ui.width-80, app.ui.height-40), surface=state.getIcons().getLoadedIcon("open"),
                                       onClick=self.openAsk)
-        self.saveBtn = pyos.GUI.Image((app.ui.width-40, app.ui.height-40), surface=state.getIcons().getLoadedIcon("save"),
+        self.saveBtn = Image((app.ui.width-40, app.ui.height-40), surface=state.getIcons().getLoadedIcon("save"),
                                       onClick=self.save, onClickData=(True,))
         
         app.ui.addChildren(self.textField, self.fnText, self.openBtn, self.saveBtn)
@@ -47,7 +52,7 @@ class Editor(object):
                 self.unsaved = False
                 self.fnText.setText(self.path[max(self.path.rfind("/"), self.path.rfind("\\"))+1:])
             except:
-                pyos.GUI.ErrorDialog("The file "+self.path+" could not be written to.").display()
+                ErrorDialog("The file "+self.path+" could not be written to.").display()
         
     def openAsk(self):
         state.getApplicationList().getApp("files").getModule().FilePicker(("5%", "5%"), app, width="90%", height="90%",

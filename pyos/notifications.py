@@ -20,13 +20,13 @@ class Notification(object):
 
     def onSelected(self):
         self.clear()
-        State.instance.getFunctionBar().toggleNotificationMenu()
+        State.instance().getFunctionBar().toggleNotificationMenu()
         self.onSelectedMethod(*self.onSelectedData)
 
     def clear(self):
         self.active = False
-        State.instance.getNotificationQueue().sweep()
-        State.instance.getFunctionBar().notificationMenu.refresh()
+        State.instance().getNotificationQueue().sweep()
+        State.instance().getFunctionBar().notificationMenu.refresh()
 
     def getContainer(self, c_width=200, c_height=40):
         cont = GUI.Container((0, 0), width=c_width, height=c_height, transparent=True, onClick=self.onSelected,
@@ -41,7 +41,7 @@ class Notification(object):
                 else:
                     self.image = GUI.Image((0, 0), path=self.image, onClick=self.onSelected)
         else:
-            self.image = GUI.Image((0, 0), surface=State.instance.getIcons().getLoadedIcon("unknown"), onClick=self.onSelected,
+            self.image = GUI.Image((0, 0), surface=State.instance().getIcons().getLoadedIcon("unknown"), onClick=self.onSelected,
                                    onLongClick=self.clear)
         rtitle = GUI.Text((41, 0), self.title, (200, 200, 200), 20, onClick=self.onSelected, onLongClick=self.clear)
         rtxt = GUI.Text((41, 24), self.text, (200, 200, 200), 14, onClick=self.onSelected, onLongClick=self.clear)
@@ -59,19 +59,3 @@ class PermanentNotification(Notification):
         super(PermanentNotification, self).clear()
 
 
-class NotificationQueue(object):
-    def __init__(self):
-        self.notifications = []
-        self.new = False
-
-    def sweep(self):
-        for notification in self.notifications:
-            if not notification.active:
-                self.notifications.remove(notification)
-
-    def push(self, notification):
-        self.notifications.insert(0, notification)
-        self.new = True
-
-    def clear(self):
-        self.notifications = []

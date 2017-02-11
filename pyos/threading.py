@@ -53,7 +53,7 @@ class Thread(object):
             if not self.pause and not self.stop:
                 self.method()
         except:
-            State.error_recovery("Thread error.", "Thread bindings: " + str(self.eventBindings))
+            State.instance().error_recovery("Thread error.", "Thread bindings: " + str(self.eventBindings))
             self.stop = True
             self.firstRun = False
 

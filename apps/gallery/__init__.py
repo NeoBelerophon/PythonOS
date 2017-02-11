@@ -1,5 +1,10 @@
 import pyos
+import pyos.gui as gui
 from pyos import threading
+from pyos.gui.container import Container
+from pyos.gui.griddedpagedcontainer import GriddedPagedContainer
+from pyos.gui.image import Image
+from pyos.gui.text import Text
 
 
 def onStart(s, a):
@@ -31,7 +36,7 @@ def aspect_scale(img, (bx, by)):
             sy = by
     return pyos.pygame.transform.scale(img, (int(sx), int(sy)))
 
-class GalleryThumbnail(pyos.GUI.Container):
+class GalleryThumbnail(Container):
     def __init__(self, position, w, h, image, imageLoadApp):
         self.imageLoadApp = imageLoadApp
         self.image = image
@@ -39,8 +44,8 @@ class GalleryThumbnail(pyos.GUI.Container):
                                                border=2, borderColor=(200, 200, 200),
                                                onClick=self.open)
         self.SKIP_CHILD_CHECK = True
-        self.picture = pyos.GUI.Image(((self.width/2)-20, ((self.height-20)/2)-20), path="apps/gallery/loading.png")
-        self.title = pyos.GUI.Text((2, self.height-19), self.image.replace("\\", "/")[self.image.replace("\\", "/").rfind("/")+1:],
+        self.picture = Image(((self.width/2)-20, ((self.height-20)/2)-20), path="apps/gallery/loading.png")
+        self.title = Text((2, self.height-19), self.image.replace("\\", "/")[self.image.replace("\\", "/").rfind("/")+1:],
                                    state.getColorPalette().getColor("item"), 16)
         self.addChild(self.picture)
         self.addChild(self.title)
@@ -52,7 +57,7 @@ class GalleryThumbnail(pyos.GUI.Container):
     def loadRealImage(self):
         img = aspect_scale(pyos.pygame.image.load(self.image), (self.width, self.height-20))
         self.picture.setImage(surface=img, resize=True)
-        self.picture.position[0] = pyos.GUI.getCenteredCoordinates(self.picture, self)[0]
+        self.picture.position[0] = gui.core.getCenteredCoordinates(self.picture, self)[0]
         self.picture.position[1] = ((self.height-20)/2)-(self.picture.height/2)
     
 class Gallery(object):
@@ -60,10 +65,10 @@ class Gallery(object):
         self.filesApp = state.getApplicationList().getApp("files")
         self.imageViewerApp = state.getApplicationList().getApp("image-viewer")
         
-        self.pages = pyos.GUI.GriddedPagedContainer((0, 40), 2, 2, width=app.ui.width, height=app.ui.height-40, color=state.getColorPalette().getColor("background"), margin=0, padding=0)
-        self.titleText = pyos.GUI.Text((2, 6), "Gallery", state.getColorPalette().getColor("item"), 24)
+        self.pages = GriddedPagedContainer((0, 40), 2, 2, width=app.ui.width, height=app.ui.height-40, color=state.getColorPalette().getColor("background"), margin=0, padding=0)
+        self.titleText = Text((2, 6), "Gallery", state.getColorPalette().getColor("item"), 24)
         self.path = app.dataStore.get("path", "")
-        self.selectBtn = pyos.GUI.Image((app.ui.width-40, 0), surface=self.filesApp.getIcon(),
+        self.selectBtn = Image((app.ui.width-40, 0), surface=self.filesApp.getIcon(),
                                         onClick=self.selectDir)
         app.ui.addChild(self.pages)
         app.ui.addChild(self.titleText)

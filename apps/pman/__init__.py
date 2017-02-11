@@ -3,8 +3,23 @@ from datetime import timedelta
 from urllib import urlretrieve
 
 import pyos
+import pyos.gui as gui
 from apps.pman.fuzzywuzzy import fuzz
 from pyos import threading
+from pyos.datastore import DataStore
+from pyos.gui.button import Button
+from pyos.gui.container import Container
+from pyos.gui.dialog import ErrorDialog, YNDialog
+from pyos.gui.expandingmultilinetext import ExpandingMultiLineText
+from pyos.gui.image import Image
+from pyos.gui.listpagedcontainer import ListPagedContainer
+from pyos.gui.listscrollablecontainer import ListScrollableContainer
+from pyos.gui.multilinetext import MultiLineText
+from pyos.gui.overlay import Overlay
+from pyos.gui.selector import Selector
+from pyos.gui.text import Text
+from pyos.gui.textentryfield import TextEntryField
+from pyos.gui.textscrollablecontainer import TextScrollableContainer
 
 """
 PMan Specific app.json parameters.
@@ -68,17 +83,17 @@ def readJSON(path):
     except:
         return {"apps": ""}
     
-class ProgressDialog(pyos.GUI.Overlay):
+class ProgressDialog(Overlay):
     def __init__(self):
         super(ProgressDialog, self).__init__((0, 0), width=app.ui.width, height=app.ui.height, color=state.getColorPalette().getColor("item"))
         self.container.border = 1
         self.container.borderColor = state.getColorPalette().getColor("background")
-        self.title = pyos.GUI.Text((2, 2), "PMan is working...", state.getColorPalette().getColor("background"), 16)
-        self.text = pyos.GUI.ExpandingMultiLineText((0, 0), "Stand by.", state.getColorPalette().getColor("background"), 16,
+        self.title = Text((2, 2), "PMan is working...", state.getColorPalette().getColor("background"), 16)
+        self.text = ExpandingMultiLineText((0, 0), "Stand by.", state.getColorPalette().getColor("background"), 16,
                                            width=self.width, height=self.height-60)
-        self.tsc = pyos.GUI.TextScrollableContainer((0, 20), self.text, width=self.width, height=self.height-60,
+        self.tsc = TextScrollableContainer((0, 20), self.text, width=self.width, height=self.height-60,
                                                     color=state.getColorPalette().getColor("item"))
-        self.clsbtn = pyos.GUI.Button((0, self.height-40), "Hide Progress", width=self.width, height=40,
+        self.clsbtn = Button((0, self.height-40), "Hide Progress", width=self.width, height=40,
                                       onClick=self.hide)
         self.notification = None
         self.addChild(self.title)
@@ -98,7 +113,7 @@ class ProgressDialog(pyos.GUI.Overlay):
                 self.notification = pyos.PermanentNotification("PMan Status", self.text.text, image=app.getIcon())
                 state.getNotificationQueue().push(self.notification)
         
-class AppIcon(pyos.GUI.Image):
+class AppIcon(Image):
     def __init__(self, position, appname, w=40, h=40, **data):
         if appname in state.getApplicationList().applications.values():
             super(AppIcon, self).__init__(position, surface=state.getApplicationList().getApp(appname).getIcon(), width=w, height=h, **data)
@@ -113,7 +128,7 @@ class AppIcon(pyos.GUI.Image):
                     except:
                         super(AppIcon, self).__init__(position, surface=state.getIcons().getLoadedIcon("unknown"), width=w, height=h, **data)
                     
-class AppActionButton(pyos.GUI.Button):
+class AppActionButton(Button):
     def __init__(self, position, appname, w, h):
         self.app = appname
         super(AppActionButton, self).__init__(position, "", width=w, height=h)
@@ -138,35 +153,35 @@ class UIParts:
     @staticmethod
     def smallAppEntry(appname, onC, fits="appui"):
         if fits == "appui": fits = app.ui
-        cont = pyos.GUI.Container((0, 0), width=fits.computedWidth, height=20, border=1, onClick=onC)
+        cont = Container((0, 0), width=fits.computedWidth, height=20, border=1, onClick=onC)
         cont.addChild(AppIcon((0, 0), appname, 20, 20, onClick=onC))
-        cont.addChild(pyos.GUI.Text((22, 2), cache.get(appname)["title"], pyos.DEFAULT, 16, onClick=onC))
+        cont.addChild(Text((22, 2), cache.get(appname)["title"], gui.DEFAULT, 16, onClick=onC))
         cont.addChild(AppActionButton((cont.computedWidth-40, 0), appname, 40, 20))
         return cont
     
     @staticmethod
     def normalAppEntry(appname, onC, fits="appui"):
         if fits == "appui": fits = app.ui
-        cont = pyos.GUI.Container((0, 0), width=fits.computedWidth, height=40, border=1, onClick=onC)
+        cont = Container((0, 0), width=fits.computedWidth, height=40, border=1, onClick=onC)
         cont.addChild(AppIcon((0, 0), appname, 40, 40, onClick=onC))
-        cont.addChild(pyos.GUI.Text((42, 2), cache.get(appname)["title"], pyos.DEFAULT, 18, onClick=onC))
-        cont.addChild(pyos.GUI.Text((42, 22), cache.get(appname)["author"], pyos.DEFAULT, 14, onClick=onC))
+        cont.addChild(Text((42, 2), cache.get(appname)["title"], gui.DEFAULT, 18, onClick=onC))
+        cont.addChild(Text((42, 22), cache.get(appname)["author"], gui.DEFAULT, 14, onClick=onC))
         cont.addChild(AppActionButton((cont.computedWidth-60, 0), appname, 60, 40))
         return cont
     
     @staticmethod
     def largeAppEntry(appname, onC, fits="appui"):
         if fits == "appui": fits = app.ui
-        cont = pyos.GUI.Container((0, 0), width=fits.computedWidth, height=64, border=1, onClick=onC)
+        cont = Container((0, 0), width=fits.computedWidth, height=64, border=1, onClick=onC)
         cont.addChild(AppIcon((0, 0), appname, 40, 40, onClick=onC))
-        cont.addChild(pyos.GUI.Text((42, 2), cache.get(appname)["title"], pyos.DEFAULT, 18, onClick=onC))
-        cont.addChild(pyos.GUI.Text((42, 22), cache.get(appname)["author"], pyos.DEFAULT, 14, onClick=onC))
+        cont.addChild(Text((42, 2), cache.get(appname)["title"], gui.DEFAULT, 18, onClick=onC))
+        cont.addChild(Text((42, 22), cache.get(appname)["author"], gui.DEFAULT, 14, onClick=onC))
         cont.addChild(AppActionButton((cont.computedWidth-60, 0), appname, 60, 40))
         dt = cache.get(appname).get("description", "No Description.")
-        cont.addChild(pyos.GUI.MultiLineText((2, 40), dt[:dt.find(".")], pyos.DEFAULT, 12, width=cont.computedWidth, height=24))
+        cont.addChild(MultiLineText((2, 40), dt[:dt.find(".")], gui.DEFAULT, 12, width=cont.computedWidth, height=24))
         return cont
     
-class SizeSelector(pyos.GUI.Selector):
+class SizeSelector(Selector):
     def __init__(self, position, w, h, oVc):
         self.size = app.dataStore.get("sel_size", "Small")
         self.choices = ["Small", "Normal", "Detailed"]
@@ -184,12 +199,12 @@ class SizeSelector(pyos.GUI.Selector):
         if val == "Normal": return UIParts.normalAppEntry(appname, onC, fits)
         if val == "Detailed": return UIParts.largeAppEntry(appname, onC, fits)
     
-class BackBtn(pyos.GUI.Image):
+class BackBtn(Image):
     def __init__(self, position):
         super(BackBtn, self).__init__(position, surface=state.getIcons().getLoadedIcon("back"),
                                       onClick=pman.closeLast)
     
-class Screen(pyos.GUI.Container):
+class Screen(Container):
     def __init__(self, name):
         self.name = name
         super(Screen, self).__init__((0, 0), width=app.ui.width, height=app.ui.height)
@@ -216,12 +231,12 @@ class AppScreen(Screen):
         self.clearChildren()
         self.data = cache.get(self.appname)
         self.addChild(UIParts.normalAppEntry(self.appname, pyos.Application.dummy))
-        self.addChild(pyos.GUI.Text((2, 42), "Package: "+self.appname))
-        self.addChild(pyos.GUI.Text((2, 58), "Version "+str(self.data.get("version", 0.0))))
-        if self.appname in app.dataStore.get("featured", []): self.addChild(pyos.GUI.Text((2, 74), "Featured", (250, 150, 150)))
-        self.addChild(pyos.GUI.MultiLineText((2, 90), self.data.get("description", "No Description"), width=app.ui.width, height=(app.ui.height-130)))
+        self.addChild(Text((2, 42), "Package: "+self.appname))
+        self.addChild(Text((2, 58), "Version "+str(self.data.get("version", 0.0))))
+        if self.appname in app.dataStore.get("featured", []): self.addChild(Text((2, 74), "Featured", (250, 150, 150)))
+        self.addChild(MultiLineText((2, 90), self.data.get("description", "No Description"), width=app.ui.width, height=(app.ui.height-130)))
         self.addChild(BackBtn((0, self.height-40)))
-        self.addChild(pyos.GUI.Button((40, self.height-40), "More by "+self.data.get("author"),
+        self.addChild(Button((40, self.height-40), "More by "+self.data.get("author"),
                                       state.getColorPalette().getColor("dark:background"), width=app.ui.width-40, height=40,
                                       onClick=AppListScreen.ondemand,
                                       onClickData=([a for a in cache.data.keys() if cache.get(a).get("author") == self.data.get("author")],)))
@@ -241,7 +256,7 @@ class UpdateScreen(Screen):
         self.sizesel = SizeSelector((app.ui.width-100, 0), 100, 40, self.bgLoad)
         self.addChild(self.sizesel)
         self.scroller.clearChildren()
-        txt = pyos.GUI.Text((0, 0), "Loading...")
+        txt = Text((0, 0), "Loading...")
         self.scroller.addChild(txt)
         au = 0
         for lapp in sorted(state.getApplicationList().getApplicationList(), key=lambda x: x.title):
@@ -253,8 +268,8 @@ class UpdateScreen(Screen):
         
     def refresh(self):
         self.clearChildren()
-        self.scroller = pyos.GUI.ListScrollableContainer((0, 40), width=app.ui.width, height=app.ui.height-40)
-        self.statustxt = pyos.GUI.Text((42, 11), "0 Updates", pyos.DEFAULT, 18)
+        self.scroller = ListScrollableContainer((0, 40), width=app.ui.width, height=app.ui.height-40)
+        self.statustxt = Text((42, 11), "0 Updates", gui.DEFAULT, 18)
         self.back = BackBtn((0, 0))
         self.sizesel = SizeSelector((app.ui.width-100, 0), 100, 40, self.bgLoad)
         self.addChildren(self.scroller, self.statustxt, self.back, self.sizesel)
@@ -276,7 +291,7 @@ class AppListScreen(Screen):
         self.sizesel = SizeSelector((app.ui.width-100, 0), 100, 40, self.bgLoad)
         self.addChild(self.sizesel)
         self.scroller.clearChildren()
-        txt = pyos.GUI.Text((0, 0), "Loading...")
+        txt = Text((0, 0), "Loading...")
         self.scroller.addChild(txt)
         au = 0
         for a in sorted(self.apps, key=lambda x: cache.get(x, {"title": x}).get("title")):
@@ -287,8 +302,8 @@ class AppListScreen(Screen):
         
     def refresh(self):
         self.clearChildren()
-        self.scroller = pyos.GUI.ListScrollableContainer((0, 40), width=app.ui.width, height=app.ui.height-40)
-        self.statustxt = pyos.GUI.Text((42, 11), "0 Apps", pyos.DEFAULT, 18)
+        self.scroller = ListScrollableContainer((0, 40), width=app.ui.width, height=app.ui.height-40)
+        self.statustxt = Text((42, 11), "0 Apps", gui.DEFAULT, 18)
         self.back = BackBtn((0, 0))
         self.sizesel = SizeSelector((app.ui.width-100, 0), 100, 40, self.bgLoad)
         self.addChildren(self.scroller, self.statustxt, self.back, self.sizesel)
@@ -310,7 +325,7 @@ class SearchScreen(Screen):
         self.sizesel = SizeSelector((app.ui.width-80, 0), 80, 40, self.bgLoad)
         self.addChild(self.sizesel)
         self.scroller.clearChildren()
-        txt = pyos.GUI.Text((0, 0), "Loading...")
+        txt = Text((0, 0), "Loading...")
         self.scroller.addChild(txt)
         results = {}
         for a in cache.data.keys():
@@ -330,9 +345,9 @@ class SearchScreen(Screen):
         
     def refresh(self):
         self.clearChildren()
-        self.scroller = pyos.GUI.ListScrollableContainer((0, 40), width=app.ui.width, height=app.ui.height-40)
-        self.statustxt = pyos.GUI.TextEntryField((40, 0), self.query, width=self.width-160, height=40)
-        self.submitbtn = pyos.GUI.Image((self.width-120, 0), surface=state.getIcons().getLoadedIcon("search"),
+        self.scroller = ListScrollableContainer((0, 40), width=app.ui.width, height=app.ui.height-40)
+        self.statustxt = TextEntryField((40, 0), self.query, width=self.width-160, height=40)
+        self.submitbtn = Image((self.width-120, 0), surface=state.getIcons().getLoadedIcon("search"),
                                         onClick=self.setQuery)
         self.back = BackBtn((0, 0))
         self.sizesel = SizeSelector((app.ui.width-80, 0), 80, 40, self.bgLoad)
@@ -347,41 +362,41 @@ class MainScreen(Screen):
     def refresh(self):
         self.clearChildren()
         if internet_on():
-            self.addChild(pyos.GUI.Button((40, self.height-80), "Update Database", (107, 148, 103), width=self.width-40, height=40,
+            self.addChild(Button((40, self.height-80), "Update Database", (107, 148, 103), width=self.width-40, height=40,
                                           onClick=cache.bgUpdate))
-            self.addChild(pyos.GUI.Image((0, self.height-80), surface=state.getIcons().getLoadedIcon("save"),
+            self.addChild(Image((0, self.height-80), surface=state.getIcons().getLoadedIcon("save"),
                                      onClick=cache.bgUpdate))
-            self.featuredHerald = pyos.GUI.Container((0, 0), width=self.width, height=20, color=(51, 183, 255))
-            self.featuredHerald.addChild(pyos.GUI.Text((2, 2), "Featured Apps", pyos.DEFAULT, 16))
-            self.featuredShowcase = pyos.GUI.ListPagedContainer((0, 20), width=self.width, height=90,
+            self.featuredHerald = Container((0, 0), width=self.width, height=20, color=(51, 183, 255))
+            self.featuredHerald.addChild(Text((2, 2), "Featured Apps", gui.DEFAULT, 16))
+            self.featuredShowcase = ListPagedContainer((0, 20), width=self.width, height=90,
                                                                 border=1, borderColor=(51, 183, 255))
             if app.dataStore.get("featured", []) == []:
-                self.featuredShowcase.addChild(pyos.GUI.Text((5, 5), "No Featured Apps."))
+                self.featuredShowcase.addChild(Text((5, 5), "No Featured Apps."))
             else:
                 for fa in app.dataStore.get("featured", []):
                     self.featuredShowcase.addChild(UIParts.largeAppEntry(fa, AppScreen(fa).activate))
             self.featuredShowcase.goToPage()
             self.addChild(self.featuredHerald)
             self.addChild(self.featuredShowcase)
-            self.addChild(pyos.GUI.Button((0, self.height-120), "Updates", (255, 187, 59), width=self.width/2, height=40,
+            self.addChild(Button((0, self.height-120), "Updates", (255, 187, 59), width=self.width/2, height=40,
                                           onClick=UpdateScreen.ondemand))
-            self.addChild(pyos.GUI.Button((self.width/2, self.height-120), "All Apps", (148, 143, 133), width=self.width/2, height=40,
+            self.addChild(Button((self.width/2, self.height-120), "All Apps", (148, 143, 133), width=self.width/2, height=40,
                                           onClick=AppListScreen.ondemand, onClickData=(cache.data.keys(),)))
-            self.searchBar = pyos.GUI.TextEntryField((0, self.height-160), "", width=self.width-40, height=40)
-            self.addChild(pyos.GUI.Image((self.width-40, self.height-160), surface=state.getIcons().getLoadedIcon("search"),
+            self.searchBar = TextEntryField((0, self.height-160), "", width=self.width-40, height=40)
+            self.addChild(Image((self.width-40, self.height-160), surface=state.getIcons().getLoadedIcon("search"),
                                          onClick=self.search))
             self.addChild(self.searchBar)
             
-        self.addChild(pyos.GUI.Image((0, self.height-40), surface=state.getIcons().getLoadedIcon("open"),
+        self.addChild(Image((0, self.height-40), surface=state.getIcons().getLoadedIcon("open"),
                                       onClick=Installer.localAsk))
-        self.addChild(pyos.GUI.Button((40, self.height-40), "Install from File", (194, 89, 19), width=self.width-40, height=40,
+        self.addChild(Button((40, self.height-40), "Install from File", (194, 89, 19), width=self.width-40, height=40,
                                       onClick=Installer.localAsk))
         
     def search(self):
         SearchScreen.ondemand(self.searchBar.getText())
         
     
-class Cache(pyos.DataStore):
+class Cache(DataStore):
     def __init__(self, doDialog=True):
         self.dsPath = "apps/pman/cache.json"
         self.application = app
@@ -457,12 +472,12 @@ class Installer(object):
                 jd = readJSON("temp/app.json")
                 self.name = jd["name"]
                 if jd.get("pman", {}).get("min_os", 0.0) > pman.sysInf.get("version"):
-                    pyos.GUI.ErrorDialog("The package requires a newer version of Python OS.").display()
+                    ErrorDialog("The package requires a newer version of Python OS.").display()
                     return
             except:
-                pyos.GUI.ErrorDialog("The file "+self.name+" is not a valid Python OS ZIP File.").display()
+                ErrorDialog("The file "+self.name+" is not a valid Python OS ZIP File.").display()
                 return
-        pyos.GUI.YNDialog("Install", 
+        YNDialog("Install", 
                           "Are you sure you want to install the package "+self.name+"? This will install the app and any unmet dependencies.",
                           self.confirm).display()
         self.dialog = ProgressDialog()

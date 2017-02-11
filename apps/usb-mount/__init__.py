@@ -1,6 +1,12 @@
 import pyos
 import os
 
+from pyos.gui.button import Button
+from pyos.gui.container import Container
+from pyos.gui.dialog import OKCancelDialog, YNDialog, ErrorDialog
+from pyos.gui.listscrollablecontainer import ListScrollableContainer
+from pyos.gui.text import Text
+
 mounted = []
 
 def onStart(s, a):
@@ -9,7 +15,7 @@ def onStart(s, a):
     app = a
     mounter = USBMount()
     
-class USBEntry(pyos.GUI.Container):
+class USBEntry(Container):
     def __init__(self, device, **data):
         data["onClickData"] = (self,)
         super(USBEntry, self).__init__((0, 0), **data)
@@ -21,9 +27,9 @@ class USBEntry(pyos.GUI.Container):
             self.location = [e[1] for e in mounted if e[0] == self.device][0]
         self.title = None
         if self.mounted:
-            self.title = pyos.GUI.Text((2, 8), self.device.strip("/dev/"), (100, 200, 100), 24)
+            self.title = Text((2, 8), self.device.strip("/dev/"), (100, 200, 100), 24)
         else:
-            self.title = pyos.GUI.Text((2, 8), self.device.strip("/dev/"), state.getColorPalette().getColor("item"), 24)
+            self.title = Text((2, 8), self.device.strip("/dev/"), state.getColorPalette().getColor("item"), 24)
         self.addChild(self.title)
         
     def recheck(self):
@@ -36,14 +42,14 @@ class USBEntry(pyos.GUI.Container):
     
 class USBMount(object):
     def __init__(self):
-        self.usblist = pyos.GUI.ListScrollableContainer((0, 40), width=app.ui.width, height=app.ui.height-40, scrollAmount=40, color=state.getColorPalette().getColor("background"))
-        app.ui.addChild(pyos.GUI.Text((2, 8), "USB List", state.getColorPalette().getColor("item"), 24))
-        app.ui.addChild(pyos.GUI.Button((app.ui.width-80, 0), "Refresh", (100, 200, 100), (20, 20, 20), 24, onClick=self.refresh))
+        self.usblist = ListScrollableContainer((0, 40), width=app.ui.width, height=app.ui.height-40, scrollAmount=40, color=state.getColorPalette().getColor("background"))
+        app.ui.addChild(Text((2, 8), "USB List", state.getColorPalette().getColor("item"), 24))
+        app.ui.addChild(Button((app.ui.width-80, 0), "Refresh", (100, 200, 100), (20, 20, 20), 24, onClick=self.refresh))
         app.ui.addChild(self.usblist)
         self.populateList()
         
     def mountAsk(self, dev):
-        pyos.GUI.OKCancelDialog("Mount", "Please select a folder to mount "+dev.device+" in.", self.mountSelect, (dev,)).display()
+        OKCancelDialog("Mount", "Please select a folder to mount "+dev.device+" in.", self.mountSelect, (dev,)).display()
         
     def mountSelect(self, dev, resp):
         if resp == "OK":
@@ -59,7 +65,7 @@ class USBMount(object):
         self.populateList()
         
     def unmountAsk(self, dev):
-        pyos.GUI.YNDialog("Unmount", "Are you sure you want to unmount "+dev.device+"?", self.unmount, (dev,)).display()
+        YNDialog("Unmount", "Are you sure you want to unmount "+dev.device+"?", self.unmount, (dev,)).display()
         
     def unmount(self, device, resp):
         global mounted
@@ -85,7 +91,7 @@ class USBMount(object):
         try:
             return [os.path.join("/dev/", device) for device in os.listdir("/dev/") if (device.find("sd") != -1 and len(device) > 3)]
         except:
-            pyos.GUI.ErrorDialog("Unable to list /dev/.").display()
+            ErrorDialog("Unable to list /dev/.").display()
             return []
     
     def refresh(self):

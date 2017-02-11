@@ -4,3 +4,4 @@ docs/donau.ogg
 .project
 .pydevproject
 *.ds
+/.idea/

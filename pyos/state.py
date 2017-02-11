@@ -3,12 +3,6 @@ from datetime import datetime
 from traceback import format_exc
 
 import pygame
-from pyos.gui import GUI
-from pyos.notifications import NotificationQueue
-from pyos.threading import Controller
-from pyos.application import ApplicationList, Application
-
-screen = None
 
 
 class Singleton:
@@ -49,11 +43,22 @@ class Singleton:
     def __instancecheck__(self, inst):
         return isinstance(inst, self._decorated)
 
+
 @Singleton
 class State(object):
     def __init__(self, activeApp=None, colors=None, icons=None, controller=None, eventQueue=None,
                  notificationQueue=None, functionbar=None, font=None, tFont=None, gui=None, appList=None,
                  keyboard=None):
+        import pyos.gui
+        from pyos.gui.colorpalette import ColorPalette
+        from pyos.gui.eventqueue import EventQueue
+        from pyos.gui.font import Font
+        from pyos.gui.icons import Icons
+
+
+        from pyos.notificationqueue import NotificationQueue
+        from pyos.threading import Controller
+
         self.activeApplication = activeApp
         self.colorPalette = colors
         self.icons = icons
@@ -67,21 +72,21 @@ class State(object):
         self.keyboard = keyboard
         self.recentAppSwitcher = None
         if gui is None:
-            self.gui = GUI()
+            self.gui = pyos.gui.core()
         if colors is None:
-            self.colorPalette = GUI.ColorPalette()
+            self.colorPalette = ColorPalette()
         if icons is None:
-            self.icons = GUI.Icons()
+            self.icons = Icons()
         if controller is None:
             self.threadController = Controller()
         if eventQueue is None:
-            self.eventQueue = GUI.EventQueue()
+            self.eventQueue = EventQueue()
         if notificationQueue is None:
             self.notificationQueue = NotificationQueue()
         if font is None:
-            self.font = GUI.Font()
+            self.font = Font()
         if tFont is None:
-            self.typingFont = GUI.Font("res/RobotoMono-Regular.ttf")
+            self.typingFont = Font("res/RobotoMono-Regular.ttf")
 
     def getActiveApplication(self):
         return self.activeApplication
@@ -110,12 +115,17 @@ class State(object):
     def getGUI(self):
         return self.gui
 
+    def getScreen(self):
+        return self.gui.getScreen();
+
     def getApplicationList(self):
-        if self.appList == None: self.appList = ApplicationList()
+        from pyos.application import ApplicationList, Application
+        if self.appList is None: self.appList = ApplicationList()
         return self.appList
 
     def getFunctionBar(self):
-        if self.functionBar == None: self.functionBar = GUI.FunctionBar()
+        from pyos.gui.functionbar import FunctionBar
+        if self.functionBar is None: self.functionBar = FunctionBar()
         return self.functionBar
 
     def getKeyboard(self):
@@ -159,17 +169,19 @@ class State(object):
 
     @staticmethod
     def getState():
-        return state
+        return  State.instance()
 
     @staticmethod
     def exit():
+        state = State.instance()
         state.getThreadController().stopAllThreads()
         pygame.quit()
         os._exit(1)
 
     @staticmethod
     def rescue():
-        global state
+        state = State.instance()
+        from pyos.application import Application
         rFnt = pygame.font.Font(None, 16)
         rClock = pygame.time.Clock()
         state.getNotificationQueue().clear()
@@ -177,15 +189,15 @@ class State(object):
         print "Recovery menu entered."
         while True:
             rClock.tick(10)
-            screen.fill([0, 0, 0])
-            pygame.draw.rect(screen, [200, 200, 200], [0, 0, 280, 80])
-            screen.blit(rFnt.render("Return to Python OS", 1, [20, 20, 20]), [40, 35])
-            pygame.draw.rect(screen, [20, 200, 20], [0, 80, 280, 80])
-            screen.blit(rFnt.render("Stop all apps and return", 1, [20, 20, 20]), [40, 115])
-            pygame.draw.rect(screen, [20, 20, 200], [0, 160, 280, 80])
-            screen.blit(rFnt.render("Stop current app and return", 1, [20, 20, 20]), [40, 195])
-            pygame.draw.rect(screen, [200, 20, 20], [0, 240, 280, 80])
-            screen.blit(rFnt.render("Exit completely", 1, [20, 20, 20]), [40, 275])
+            state.getScreen().fill([0, 0, 0])
+            pygame.draw.rect(state.getScreen(), [200, 200, 200], [0, 0, 280, 80])
+            state.getScreen().blit(rFnt.render("Return to Python OS", 1, [20, 20, 20]), [40, 35])
+            pygame.draw.rect(state.getScreen(), [20, 200, 20], [0, 80, 280, 80])
+            state.getScreen().blit(rFnt.render("Stop all apps and return", 1, [20, 20, 20]), [40, 115])
+            pygame.draw.rect(state.getScreen(), [20, 20, 200], [0, 160, 280, 80])
+            state.getScreen().blit(rFnt.render("Stop current app and return", 1, [20, 20, 20]), [40, 195])
+            pygame.draw.rect(state.getScreen(), [200, 20, 20], [0, 240, 280, 80])
+            state.getScreen().blit(rFnt.render("Exit completely", 1, [20, 20, 20]), [40, 275])
             pygame.display.flip()
             for evt in pygame.event.get():
                 if evt.type == pygame.QUIT or evt.type == pygame.KEYDOWN and evt.key == pygame.K_ESCAPE:
@@ -230,10 +242,11 @@ class State(object):
     @staticmethod
     def error_recovery(message="Unknown", data=None):
         print message
-        screen.fill([200, 100, 100])
+        state = State.instance()
+        state.getScreen().fill([200, 100, 100])
         rf = pygame.font.Font(None, 24)
         sf = pygame.font.Font(None, 18)
-        screen.blit(rf.render("Failure detected.", 1, (200, 200, 200)), [20, 20])
+        state.getScreen().blit(rf.render("Failure detected.", 1, (200, 200, 200)), [20, 20])
         f = open("temp/last_error.txt", "w")
         txt = "Python OS 6 Error Report\nTIME: " + str(datetime.now())
         txt += "\n\nOpen Applications: " + (str([a.name for a in
@@ -245,14 +258,14 @@ class State(object):
         txt += format_exc()
         f.write(txt)
         f.close()
-        screen.blit(sf.render("Traceback saved.", 1, (200, 200, 200)), [20, 80])
-        screen.blit(sf.render("Location: temp/last_error.txt", 1, (200, 200, 200)), [20, 100])
-        screen.blit(sf.render("Message:", 1, (200, 200, 200)), [20, 140])
-        screen.blit(sf.render(message, 1, (200, 200, 200)), [20, 160])
-        pygame.draw.rect(screen, [200, 200, 200], [0, 280, 240, 40])
-        screen.blit(sf.render("Return to Python OS", 1, (20, 20, 20)), [20, 292])
-        pygame.draw.rect(screen, [50, 50, 50], [0, 240, 240, 40])
-        screen.blit(sf.render("Open Recovery Menu", 1, (200, 200, 200)), [20, 252])
+        state.getScreen().blit(sf.render("Traceback saved.", 1, (200, 200, 200)), [20, 80])
+        state.getScreen().blit(sf.render("Location: temp/last_error.txt", 1, (200, 200, 200)), [20, 100])
+        state.getScreen().blit(sf.render("Message:", 1, (200, 200, 200)), [20, 140])
+        state.getScreen().blit(sf.render(message, 1, (200, 200, 200)), [20, 160])
+        pygame.draw.rect(state.getScreen(), [200, 200, 200], [0, 280, 240, 40])
+        state.getScreen().blit(sf.render("Return to Python OS", 1, (20, 20, 20)), [20, 292])
+        pygame.draw.rect(state.getScreen(), [50, 50, 50], [0, 240, 240, 40])
+        state.getScreen().blit(sf.render("Open Recovery Menu", 1, (200, 200, 200)), [20, 252])
         rClock = pygame.time.Clock()
         pygame.display.flip()
         while True:
@@ -268,11 +281,15 @@ class State(object):
                     if evt.pos[1] >= 280:
                         return
                     elif evt.pos[1] >= 240:
-                        State.rescue()
+                        state.rescue()
                         return
 
     @staticmethod
     def main():
+        from pyos.gui.intermediateupdateevent import IntermediateUpdateEvent
+        from pyos.gui.longclickevent import LongClickEvent
+        from pyos.application import Application#
+        state = State.instance()
         while True:
             # Limit FPS
             state.getGUI().timer.tick(state.getGUI().update_interval)
@@ -289,7 +306,7 @@ class State(object):
                     Application.fullCloseCurrent()
             state.getFunctionBar().render()
             if state.getKeyboard() is not None and state.getKeyboard().active:
-                state.getKeyboard().render(screen)
+                state.getKeyboard().render(state.getScreen())
 
             state.getGUI().refresh()
             # Check Events
@@ -309,7 +326,7 @@ class State(object):
                         clickedChild = state.getActiveApplication().ui.getClickedChild(latestEvent)
                     if clickedChild is None and state.getKeyboard().textEntryField.computedPosition == [0,
                                                                                                         0] and state.getKeyboard().textEntryField.checkClick(
-                            latestEvent):
+                        latestEvent):
                         clickedChild = state.getKeyboard().textEntryField
                 else:
                     if latestEvent.pos[1] < state.getGUI().height - 40:
@@ -319,15 +336,15 @@ class State(object):
                         clickedChild = state.getFunctionBar().container.getClickedChild(latestEvent)
                 if clickedChild is not None:
                     try:
-                        if isinstance(latestEvent, GUI.LongClickEvent):
+                        if isinstance(latestEvent, LongClickEvent):
                             clickedChild.onLongClick()
                         else:
-                            if isinstance(latestEvent, GUI.IntermediateUpdateEvent):
+                            if isinstance(latestEvent, IntermediateUpdateEvent):
                                 clickedChild.onIntermediateUpdate()
                             else:
                                 clickedChild.onClick()
                     except:
-                        State.error_recovery("Event execution error", "Click event: " + str(latestEvent))
+                        State.instance().error_recovery("Event execution error", "Click event: " + str(latestEvent))
 
     @staticmethod
     def state_shell():
@@ -340,6 +357,6 @@ class State(object):
                     user_input = "state" + user_input
                 else:
                     user_input = "state." + user_input
-            print eval(user_input, {"state": state, "Static": State})
+            print eval(user_input, {"state": State, "Static": State})
             user_input = raw_input("S> ")
-        State.exit(True)
+        State.instance().exit(True)

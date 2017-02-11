@@ -1,5 +1,3 @@
-from pyos.state import screen
-from pyos.gui import GUI
 
 
 class ImmersionUI(object):

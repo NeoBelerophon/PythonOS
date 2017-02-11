@@ -1,6 +1,8 @@
 import datetime
 import pyos
 from pyos import threading
+from pyos.gui.button import Button
+from pyos.gui.text import Text
 
 
 def onStart(s, a):
@@ -28,27 +30,27 @@ class Timer(object):
         self.started = False
         self.endDelta = None
         app.ui.backgroundColor = (53, 106, 166)
-        self.min_text = pyos.GUI.Text((0, 40), "00m", state.getColorPalette().getColor("item"), 70)
-        self.sec_text = pyos.GUI.Text((app.ui.width/2, 40), "00s", state.getColorPalette().getColor("item"), 70)
-        self.min_inc = pyos.GUI.Button((0, 0), "+", state.getColorPalette().getColor("background"), state.getColorPalette().getColor("item"), 24,
+        self.min_text = Text((0, 40), "00m", state.getColorPalette().getColor("item"), 70)
+        self.sec_text = Text((app.ui.width/2, 40), "00s", state.getColorPalette().getColor("item"), 70)
+        self.min_inc = Button((0, 0), "+", state.getColorPalette().getColor("background"), state.getColorPalette().getColor("item"), 24,
                                         width=(app.ui.width/2)-2, height=40,
                                         onClick=self.changeMinutes, onClickData=(1,),
                                         onLongClick=self.changeMinutes, onLongClickData=(5,))
-        self.sec_inc = pyos.GUI.Button(((app.ui.width/2)+2, 0), "+", state.getColorPalette().getColor("background"), state.getColorPalette().getColor("item"), 24,
+        self.sec_inc = Button(((app.ui.width/2)+2, 0), "+", state.getColorPalette().getColor("background"), state.getColorPalette().getColor("item"), 24,
                                         width=(app.ui.width/2)+2, height=40,
                                         onClick=self.changeSeconds, onClickData=(1,),
                                         onLongClick=self.changeSeconds, onLongClickData=(10,))
-        self.min_dec = pyos.GUI.Button((0, 120), "-", state.getColorPalette().getColor("background"), state.getColorPalette().getColor("item"), 24,
+        self.min_dec = Button((0, 120), "-", state.getColorPalette().getColor("background"), state.getColorPalette().getColor("item"), 24,
                                         width=(app.ui.width/2)-2, height=40,
                                         onClick=self.changeMinutes, onClickData=(-1,),
                                         onLongClick=self.changeMinutes, onLongClickData=(-5,))
-        self.sec_dec = pyos.GUI.Button(((app.ui.width/2)+2, 120), "-", state.getColorPalette().getColor("background"), state.getColorPalette().getColor("item"), 24,
+        self.sec_dec = Button(((app.ui.width/2)+2, 120), "-", state.getColorPalette().getColor("background"), state.getColorPalette().getColor("item"), 24,
                                         width=(app.ui.width/2)+2, height=40,
                                         onClick=self.changeSeconds, onClickData=(-1,),
                                         onLongClick=self.changeSeconds, onLongClickData=(-10,))
-        self.startBtn = pyos.GUI.Button((0, app.ui.height-80), "Start", (200, 255, 200), (20, 20, 20), 20, width=app.ui.width/2, height=80,
+        self.startBtn = Button((0, app.ui.height-80), "Start", (200, 255, 200), (20, 20, 20), 20, width=app.ui.width/2, height=80,
                                         onClick=self.start)
-        self.resetBtn = pyos.GUI.Button((app.ui.width/2, app.ui.height-80), "Reset", (255, 200, 200), (20, 20, 20), 20, width=app.ui.width/2, height=80,
+        self.resetBtn = Button((app.ui.width/2, app.ui.height-80), "Reset", (255, 200, 200), (20, 20, 20), 20, width=app.ui.width/2, height=80,
                                         onClick=self.stop, onLongClick=self.completeReset)
         
         app.ui.addChild(self.min_text)

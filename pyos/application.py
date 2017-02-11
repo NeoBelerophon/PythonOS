@@ -4,13 +4,15 @@ from importlib import import_module
 from shutil import rmtree
 from zipfile import ZipFile
 
+from pyos.gui.appcontainer import AppContainer
+from pyos.gui.dialog import OKDialog
 from pyos.io import readJSON
 
 from pyos.immersionUI import ImmersionUI
 from pyos.datastore import DataStore
-from pyos.gui import GUI
-from pyos.state import State
+
 from pyos.threading import Thread
+from pyos.state import State
 
 
 class Application(object):
@@ -24,27 +26,27 @@ class Application(object):
 
     @staticmethod
     def chainRefreshCurrent():
-        if State.instance.getActiveApplication() is not None:
-            State.instance.getActiveApplication().chainRefresh()
+        if State.instance().getActiveApplication() is not None:
+            State.instance().getActiveApplication().chainRefresh()
 
     @staticmethod
     def setActiveApp(app="prev"):
         if app == "prev":
-            app = State.instance.getApplicationList().getMostRecentActive()
-        State.instance.setActiveApplication(app)
-        State.instance.getFunctionBar().app_title_text.setText(State.instance.getActiveApplication().title)
-        State.instance.getGUI().repaint()
-        State.instance.getApplicationList().pushActiveApp(app)
+            app = State.instance().getApplicationList().getMostRecentActive()
+        State.instance().setActiveApplication(app)
+        State.instance().getFunctionBar().app_title_text.setText(State.instance().getActiveApplication().title)
+        State.instance().getGUI().repaint()
+        State.instance().getApplicationList().pushActiveApp(app)
 
     @staticmethod
     def fullCloseApp(app):
         app.deactivate(False)
-        State.instance.getApplicationList().getMostRecentActive().activate(fromFullClose=True)
+        State.instance().getApplicationList().getMostRecentActive().activate(fromFullClose=True)
 
     @staticmethod
     def fullCloseCurrent():
-        if State.instance.getActiveApplication().name != "home":
-            Application.fullCloseApp(State.instance.getActiveApplication())
+        if State.instance().getActiveApplication().name != "home":
+            Application.fullCloseApp(State.instance().getActiveApplication())
 
     @staticmethod
     def removeListing(location):
@@ -63,7 +65,7 @@ class Application(object):
         package.extract("app.json", "temp/")
         app_info = readJSON("temp/app.json")
         app_name = str(app_info.get("name"))
-        if app_name not in State.instance.getApplicationList().applications.keys():
+        if app_name not in State.instance().getApplicationList().applications.keys():
             os.mkdir(os.path.join("apps/", app_name))
         else:
             print "Upgrading " + app_name
@@ -78,7 +80,7 @@ class Application(object):
 
     @staticmethod
     def registerDebugAppAsk():
-        State.instance.getApplicationList().getApp("files").getModule().FolderPicker((10, 10), width=220, height=260,
+        State.instance().getApplicationList().getApp("files").getModule().FolderPicker((10, 10), width=220, height=260,
                                                                             onSelect=Application.registerDebugApp,
                                                                             startFolder="apps/").display()
 
@@ -91,8 +93,8 @@ class Application(object):
         listingsfile = open("apps/apps.json", "w")
         json.dump(alist, listingsfile)
         listingsfile.close()
-        State.instance.getApplicationList().reloadList()
-        GUI.OKDialog("Registered", "The application from " + path + " has been registered on the system.").display()
+        State.instance().getApplicationList().reloadList()
+        OKDialog("Registered", "The application from " + path + " has been registered on the system.").display()
 
     def __init__(self, location):
         self.parameters = {}
@@ -103,7 +105,7 @@ class Application(object):
         self.version = float(app_data.get("version", 0.0))
         self.author = str(app_data.get("author", "No Author"))
         self.module = import_module("apps." + str(app_data.get("module", self.name)), "apps")
-        self.module.state = State.instance
+        self.module.state = State.instance()
         self.file = None
         try:
             self.mainMethod = getattr(self.module, str(app_data.get("main")))
@@ -133,7 +135,7 @@ class Application(object):
         if "onOSLaunch" in self.parameters: self.evtHandlers["onOSLaunch"] = getattr(self.module,
                                                                                      self.parameters["onOSLaunch"])
         self.thread = Thread(self.mainMethod, **self.evtHandlers)
-        self.ui = GUI.AppContainer(self)
+        self.ui = AppContainer(self)
         self.dataStore = DataStore(self)
         self.thread = Thread(self.mainMethod, **self.evtHandlers)
 
@@ -148,43 +150,43 @@ class Application(object):
         if "onStartReal" in self.evtHandlers and not self.evtHandlers.get("onStartBlock", False): getattr(self.module,
                                                                                                           self.evtHandlers[
                                                                                                               "onStartReal"])(
-            State.instance, self)
+            State.instance(), self)
         if self.evtHandlers.get("onStartBlock", False):
             self.evtHandlers["onStartBlock"] = False
 
     def loadColorScheme(self):
         if "colorScheme" in self.parameters:
-            State.instance.getColorPalette().setScheme(self.parameters["colorScheme"])
+            State.instance().getColorPalette().setScheme(self.parameters["colorScheme"])
         else:
-            State.instance.getColorPalette().setScheme()
-        self.ui.backgroundColor = State.instance.getColorPalette().getColor("background")
+            State.instance().getColorPalette().setScheme()
+        self.ui.backgroundColor = State.instance().getColorPalette().getColor("background")
         self.ui.refresh()
 
     def activate(self, **data):
         try:
             if data.get("noOnStart", False):
                 self.evtHandlers["onStartBlock"] = True
-            if State.instance.getActiveApplication() == self: return
-            if State.instance.getApplicationList().getMostRecentActive() != None and not data.get("fromFullClose", False):
-                State.instance.getApplicationList().getMostRecentActive().deactivate()
+            if State.instance().getActiveApplication() == self: return
+            if State.instance().getApplicationList().getMostRecentActive() != None and not data.get("fromFullClose", False):
+                State.instance().getApplicationList().getMostRecentActive().deactivate()
             Application.setActiveApp(self)
             self.loadColorScheme()
-            if self.thread in State.instance.getThreadController().threads:
+            if self.thread in State.instance().getThreadController().threads:
                 self.thread.setPause(False)
             else:
                 if self.thread.stop:
                     self.thread = Thread(self.mainMethod, **self.evtHandlers)
-                State.instance.getThreadController().addThread(self.thread)
+                State.instance().getThreadController().addThread(self.thread)
         except:
-            State.error_recovery("Application init error.", "App name: " + self.name)
+            State.instance().error_recovery("Application init error.", "App name: " + self.name)
 
     def getIcon(self):
         if "icon" in self.parameters:
             if self.parameters["icon"] == None:
                 return False
-            return State.instance.getIcons().getLoadedIcon(self.parameters["icon"], self.location)
+            return State.instance().getIcons().getLoadedIcon(self.parameters["icon"], self.location)
         else:
-            return State.instance.getIcons().getLoadedIcon("unknown")
+            return State.instance().getIcons().getLoadedIcon("unknown")
 
     def deactivate(self, pause=True):
         if "persist" in self.parameters:
@@ -195,8 +197,8 @@ class Application(object):
         else:
             self.ui.clearChildren()
             self.thread.setStop()
-            State.instance.getApplicationList().closeApp(self)
-        State.instance.getColorPalette().setScheme()
+            State.instance().getApplicationList().closeApp(self)
+        State.instance().getColorPalette().setScheme()
 
     def uninstall(self):
         rmtree(self.location, True)
@@ -212,7 +214,7 @@ class ApplicationList(object):
             try:
                 self.applications[applist.get(key)] = Application(key)
             except:
-                State.error_recovery("App init error: " + key, "NoAppDump")
+                State.instance().error_recovery("App init error: " + key, "NoAppDump")
 
     def getApp(self, name):
         if name in self.applications:
@@ -256,7 +258,7 @@ class ApplicationList(object):
         applist = Application.getListings()
         for key in dict(applist).keys():
             try:
-                if (applist.get(key) not in self.applications.keys()) and not State.instance.getActiveApplication().name == key:
+                if (applist.get(key) not in self.applications.keys()) and not State.instance().getActiveApplication().name == key:
                     self.applications[applist.get(key)] = Application(key)
             except:
                 State.error_recovery("App init error: " + key, "NoAppDump")

@@ -23,7 +23,7 @@ def loadImage(path):
             sy = app.ui.height
         img = pyos.pygame.transform.scale(img, (int(sx), int(sy)))
     image = pyos.GUI.Image((0, 0), surface=img)
-    image.position = pyos.GUI.getCenteredCoordinates(image, app.ui)
+    image.position = gui.core.getCenteredCoordinates(image, app.ui)
     app.ui.addChild(image)
 
 def onStart(s, a):

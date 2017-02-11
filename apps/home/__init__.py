@@ -1,5 +1,8 @@
 import pyos
+from datetime import datetime
 from base64 import b16encode
+
+from pyos.gui.text import Text
 
 app = None
 state = None
@@ -8,7 +11,7 @@ def onLoad(s, a):
     global app, state
     app = a
     state = s
-    welcomeText = pyos.GUI.Text((5, 5), "Welcome to Python OS 6.", state.getColorPalette().getColor("item"), 15)
+    welcomeText = Text((5, 5), "Welcome to Python OS 6.", state.getColorPalette().getColor("item"), 15)
     app.ui.addChild(welcomeText)
     
 def onUnload():
@@ -19,7 +22,7 @@ def onUnload():
     state.getFunctionBar().clock_text.refresh()
     
 def run():
-    time = pyos.datetime.now()
+    time = datetime.now()
     timetuple = (3*time.hour, 3*time.minute, 4.25*time.second)
     inverse = (255-timetuple[0], 255-timetuple[1], 255-timetuple[2])
     state.getFunctionBar().container.backgroundColor = timetuple

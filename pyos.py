@@ -10,6 +10,8 @@ Created on Dec 27, 2015
 from pyos.io import readJSON
 from pyos.state import State
 
+state = State.instance()
+
 try:
     import pygame.freetype
 except ImportError:
@@ -29,9 +31,9 @@ if __name__ == "__main__":
             try:
                 app.evtHandlers.get("onOSLaunch")()
             except:
-                State.error_recovery("App startup task failed to run properly.", "App: " + str(app.name))
+                state.error_recovery("App startup task failed to run properly.", "App: " + str(app.name))
     state.getApplicationList().getApp("home").activate()
     try:
-        State.main()
+        state.main()
     except:
-        State.error_recovery("Fatal system error.")
+        state.error_recovery("Fatal system error.")
